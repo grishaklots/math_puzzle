@@ -2,7 +2,7 @@
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const VIEW_SIZE = 1000; // internal SVG coordinate system (square)
-const HEX_COLS = 7;    // number of columns of hexes across the board
+const HEX_COLS = 6;    // number of columns of hexes across the board
 
 // -------- Difficulty levels --------
 function genQuestion(level) {
