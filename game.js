@@ -144,8 +144,8 @@ async function listImageFiles() {
 async function loadRandomImage() {
     const files = await listImageFiles();
 
-    // 50/50: real image vs emoji placeholder (only if there are actual images)
-    const useReal = files.length > 0 && Math.random() < 0.5;
+    // 90/10: real image vs emoji placeholder (only if there are actual images)
+    const useReal = files.length > 0 && Math.random() < 0.9;
     if (useReal) {
         const pick = files[Math.floor(Math.random() * files.length)];
         imgEl.src = "Images/" + encodeURIComponent(pick);
