@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>פאזל החשבון</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>פאזל החשבון</h1>
+            <div class="controls">
+                <span id="progress">0 / 0</span>
+                <button id="newGameBtn">משחק חדש</button>
+            </div>
+        </header>
+
+        <div id="board-wrapper">
+            <div id="board">
+                <img id="puzzleImage" alt="">
+                <svg id="hexLayer" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div id="legend">
+            <div class="legend-item"><span class="swatch level-1"></span>קל</div>
+            <div class="legend-item"><span class="swatch level-2"></span>בינוני</div>
+            <div class="legend-item"><span class="swatch level-3"></span>קשה</div>
+            <div class="legend-item"><span class="swatch level-4"></span>אתגר</div>
+        </div>
+
+        <!-- Modal -->
+        <div id="modal" class="hidden">
+            <div id="modal-card">
+                <div id="question"></div>
+                <div id="answer-display">?</div>
+                <div id="feedback"></div>
+                <div id="numpad">
+                    <button class="np" data-key="7">7</button>
+                    <button class="np" data-key="8">8</button>
+                    <button class="np" data-key="9">9</button>
+                    <button class="np" data-key="4">4</button>
+                    <button class="np" data-key="5">5</button>
+                    <button class="np" data-key="6">6</button>
+                    <button class="np" data-key="1">1</button>
+                    <button class="np" data-key="2">2</button>
+                    <button class="np" data-key="3">3</button>
+                    <button class="np np-back" data-key="back">⌫</button>
+                    <button class="np" data-key="0">0</button>
+                    <button class="np np-ok" data-key="ok">✓</button>
+                </div>
+                <button id="closeBtn">סגור וחזור ללוח</button>
+            </div>
+        </div>
+
+        <!-- Win screen -->
+        <div id="win" class="hidden">
+            <div id="win-card">
+                <div class="win-emoji">🎉</div>
+                <h2>כל הכבוד!</h2>
+                <p>גילית את כל התמונה!</p>
+                <button id="winNewGameBtn">משחק חדש</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="Images/manifest.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
