@@ -276,3 +276,53 @@ button:active { transform: scale(0.97); }
 .win-emoji { font-size: 80px; }
 #win-card h2 { margin: 8px 0; }
 #win-card p { margin: 0 0 16px; }
+
+/* Difficulty picker */
+#difficulty {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+}
+#difficulty.hidden { display: none; }
+#difficulty-card {
+    background: var(--panel);
+    padding: 28px 24px 22px;
+    border-radius: 18px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    width: min(420px, 92vw);
+    text-align: center;
+}
+#difficulty-card h2 { margin: 0 0 6px; font-size: 26px; }
+#difficulty-card .sub { margin: 0 0 18px; opacity: 0.85; }
+
+.diff-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.diff-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    padding: 14px 16px;
+    font-size: 20px;
+    font-weight: 800;
+    border-radius: 12px;
+    text-align: center;
+}
+.diff-btn .diff-desc {
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0.85;
+}
+.diff-btn[data-cols="6"] { background: #2f7d4a; }
+.diff-btn[data-cols="6"]:hover { background: #3aa15e; }
+.diff-btn[data-cols="7"] { background: #b56e14; }
+.diff-btn[data-cols="7"]:hover { background: #d68420; }
+.diff-btn[data-cols="8"] { background: #a03030; }
+.diff-btn[data-cols="8"]:hover { background: #c53c3c; }

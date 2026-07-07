@@ -2,7 +2,7 @@
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const VIEW_SIZE = 1000; // internal SVG coordinate system (square)
-const HEX_COLS = 6;    // number of columns of hexes across the board
+let HEX_COLS = 6;       // set from the difficulty picker (6=easy, 7=medium, 8=hard)
 
 // -------- Difficulty levels --------
 function genQuestion(level) {
@@ -282,11 +282,31 @@ modal.addEventListener("click", (e) => {
     if (e.target === modal) closeModal();
 });
 
-document.getElementById("newGameBtn").addEventListener("click", startNewGame);
+document.getElementById("newGameBtn").addEventListener("click", showDifficultyPicker);
 document.getElementById("winNewGameBtn").addEventListener("click", () => {
     winEl.classList.add("hidden");
-    startNewGame();
+    showDifficultyPicker();
 });
+
+// Difficulty picker
+const diffEl = document.getElementById("difficulty");
+document.querySelectorAll(".diff-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const cols = parseInt(btn.dataset.cols, 10);
+        if (!isNaN(cols)) HEX_COLS = cols;
+        diffEl.classList.add("hidden");
+        startNewGame();
+    });
+});
+
+function showDifficultyPicker() {
+    // clear the board while the picker is up
+    svg.innerHTML = "";
+    state.total = 0;
+    state.remaining = 0;
+    updateProgress();
+    diffEl.classList.remove("hidden");
+}
 
 async function startNewGame() {
     await loadRandomImage();
@@ -350,4 +370,5 @@ function cheatReveal() {
     setTimeout(showWin, totalMs + 800);
 }
 
-startNewGame();
+// Start with the difficulty picker (kid chooses before first game)
+showDifficultyPicker();
