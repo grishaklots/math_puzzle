@@ -11,7 +11,7 @@ let DIFFICULTY = "easy"; // "easy" | "medium" | "hard" — also biases the tile-
 // (easy → medium, medium → hard) so it plays tougher than the tile count suggests.
 const LEVEL_THRESHOLDS = {
     easy:   { l4: 0.28, l3: 0.55, l2: 0.80 },
-    medium: { l4: 0.34, l3: 0.66, l2: 0.92 },
+    medium: { l4: 0.40, l3: 0.74, l2: 1.01 },
     hard:   { l4: 0.28, l3: 0.55, l2: 0.80 },
 };
 
