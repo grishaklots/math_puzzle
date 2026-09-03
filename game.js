@@ -3,6 +3,17 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
 const VIEW_SIZE = 1000; // internal SVG coordinate system (square)
 let HEX_COLS = 6;       // set from the difficulty picker (6=easy, 7=medium, 8=hard)
+let DIFFICULTY = "easy"; // "easy" | "medium" | "hard" — also biases the tile-level mix
+
+// Radial thresholds deciding a tile's math level from its distance to center.
+// r near 0 → level 4 (hardest, center), r near 1 → level 1 (easiest, edges).
+// The medium setting is intentionally biased: it enlarges the medium/hard regions
+// (easy → medium, medium → hard) so it plays tougher than the tile count suggests.
+const LEVEL_THRESHOLDS = {
+    easy:   { l4: 0.28, l3: 0.55, l2: 0.80 },
+    medium: { l4: 0.34, l3: 0.66, l2: 0.92 },
+    hard:   { l4: 0.28, l3: 0.55, l2: 0.80 },
+};
 
 // -------- Difficulty levels --------
 function genQuestion(level) {
@@ -55,10 +66,11 @@ function buildHexGrid() {
             const dist = Math.sqrt(dx*dx + dy*dy);
             const r = Math.min(1, dist / maxDist);
             // r near 0 → level 4 (center), r near 1 → level 1 (edge)
+            const t = LEVEL_THRESHOLDS[DIFFICULTY] || LEVEL_THRESHOLDS.easy;
             let level;
-            if (r < 0.28)      level = 4;
-            else if (r < 0.55) level = 3;
-            else if (r < 0.80) level = 2;
+            if (r < t.l4)      level = 4;
+            else if (r < t.l3) level = 3;
+            else if (r < t.l2) level = 2;
             else               level = 1;
 
             hexes.push({ cx, cy, size, level });
@@ -294,6 +306,7 @@ document.querySelectorAll(".diff-btn").forEach(btn => {
     btn.addEventListener("click", () => {
         const cols = parseInt(btn.dataset.cols, 10);
         if (!isNaN(cols)) HEX_COLS = cols;
+        DIFFICULTY = cols === 7 ? "medium" : cols === 8 ? "hard" : "easy";
         diffEl.classList.add("hidden");
         startNewGame();
     });
