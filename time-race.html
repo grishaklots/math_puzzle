@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f5f0">
+  <meta name="description" content="משחק חיבור נעים ופשוט לטאבלט. מחברים מספרים מ־0 עד 9, בוחרים זמן לתרגיל ומשתפרים בקצב שלכם.">
+  <title>עוד ועוד — משחק חיבור</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: ui-rounded, "SF Pro Rounded", "Segoe UI", Arial, sans-serif;
+      --paper: #f6f5f0;
+      --ink: #343d50;
+      --muted: #768092;
+      --line: #e8e9ed;
+      --violet: #7865bc;
+      --violet-dark: #5d499c;
+      --lilac: #f0ecfb;
+      --mint: #e6f4eb;
+      --green: #368260;
+      --peach: #fceee7;
+      --coral: #b96b4e;
+      --blue: #ebf1fa;
+      --radius: 28px;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse at 8% 12%, #e7e3f180 0, transparent 34%),
+        radial-gradient(ellipse at 92% 84%, #e4efe680 0, transparent 35%),
+        var(--paper);
+    }
+    button, input { font: inherit; }
+    button {
+      min-width: 48px;
+      min-height: 48px;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      transition: background .15s, border-color .15s, transform .15s;
+    }
+    button:active:not(:disabled) { transform: translateY(1px); }
+    button:disabled { cursor: not-allowed; opacity: .48; }
+    button:focus-visible, input:focus-visible { outline: 3px solid #aa98df; outline-offset: 4px; }
+    .shell {
+      width: min(1080px, 100%);
+      margin: auto;
+      padding: max(22px, env(safe-area-inset-top)) max(26px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(26px, env(safe-area-inset-left));
+    }
+    .header, .brand, .header-actions, .score, .toolbar, .difficulty-options, .mode-options,
+    .timer-heading, .feedback, .dialog-heading, .dialog-actions { display: flex; align-items: center; }
+    .header { justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+    .brand { gap: 13px; }
+    .brand-icon {
+      display: grid; place-items: center; width: 48px; height: 48px;
+      color: var(--violet); background: #e9e3f5; border-radius: 17px;
+      font-size: 34px; line-height: 1; font-weight: 500; transform: rotate(-6deg);
+    }
+    h1 { margin: 0; font-size: 25px; letter-spacing: -.5px; font-weight: 750; }
+    .subtitle { margin: 3px 0 0; font-size: 13px; color: var(--muted); }
+    .header-actions { gap: 8px; }
+    .quiet {
+      border: 1px solid #e1e2e8; background: #ffffff9c; border-radius: 16px;
+      color: #657082; padding: 10px 15px; font-size: 13px; font-weight: 600;
+    }
+    .quiet:hover:not(:disabled) { background: #fff; border-color: #c6badd; }
+    .scores { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; margin-bottom: 18px; }
+    .score { gap: 12px; border-radius: 22px; padding: 15px 19px; border: 1px solid #ffffffb3; }
+    .score.correct { background: var(--mint); }
+    .score.wrong { background: var(--peach); }
+    .score.total { background: var(--blue); }
+    .score-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 14px; background: #ffffff7d; font-size: 19px; }
+    .correct .score-icon, .correct .score-value { color: var(--green); }
+    .wrong .score-icon, .wrong .score-value { color: var(--coral); }
+    .total .score-icon, .total .score-value { color: #5e7baf; }
+    .score-label { font-size: 12px; color: #626d7b; }
+    .score-value { margin-inline-start: auto; font-size: 30px; font-weight: 750; line-height: 1; font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; }
+    .game-card { background: #fff; border: 1px solid #ebe9e7; border-radius: var(--radius); box-shadow: 0 15px 60px #52556c08; overflow: hidden; }
+    .toolbar { justify-content: space-between; gap: 15px; padding: 18px 25px; border-bottom: 1px solid #f0eef3; flex-wrap: wrap; }
+    .game-settings { display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
+    .difficulty, .mode-setting { display: flex; gap: 13px; align-items: center; flex-wrap: wrap; }
+    .section-label { font-size: 12px; font-weight: 650; color: var(--muted); }
+    .difficulty-options, .mode-options { gap: 7px; flex-wrap: wrap; }
+    .level {
+      display: flex; align-items: center; gap: 8px; padding: 8px 13px;
+      background: #f8f8fa; border: 1px solid transparent; border-radius: 15px; color: #737a89;
+    }
+    .level strong { font-size: 12px; font-weight: 650; }
+    .level span { font-size: 11px; white-space: nowrap; }
+    .level[aria-pressed="true"] { color: var(--violet-dark); background: var(--lilac); border-color: #d9cdef; }
+    .level:hover { border-color: #c6badd; }
+    .mode-button {
+      padding: 8px 13px; background: #f8f8fa; border: 1px solid transparent;
+      border-radius: 15px; color: #737a89; font-size: 12px; font-weight: 650;
+    }
+    .mode-button[aria-pressed="true"] { color: var(--violet-dark); background: var(--lilac); border-color: #d9cdef; }
+    .mode-button:hover { border-color: #c6badd; }
+    #pauseButton { background: #faf9fc; padding-inline: 15px; min-width: 102px; }
+    #pauseButton[aria-pressed="true"] { color: var(--violet-dark); border-color: #baa9d8; background: var(--lilac); }
+    .play-area { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 35px; padding: 25px 32px; align-items: stretch; }
+    .question-pane { min-width: 0; display: flex; flex-direction: column; }
+    .timer-heading { justify-content: space-between; gap: 10px; min-height: 38px; font-size: 12px; color: var(--muted); }
+    .time-pill { display: inline-flex; align-items: baseline; gap: 5px; padding: 8px 12px; background: #f7f6fa; border-radius: 13px; white-space: nowrap; }
+    #timeLeft { font-size: 18px; font-weight: 700; color: var(--violet); font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; min-width: 40px; text-align: center; }
+    .time-pill small { font-size: 11px; }
+    .timer-track { margin-top: 9px; height: 7px; background: #f0eef5; border-radius: 10px; overflow: hidden; direction: ltr; }
+    #timerFill { width: 100%; height: 100%; background: #b8a8dc; transform-origin: left; border-radius: inherit; }
+    .urgent #timeLeft { color: var(--coral); }
+    .urgent #timerFill { background: #dfac90; }
+    .question-content { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 16px 0 8px; text-align: center; }
+    .question-tag { color: #8d80a9; background: #f7f3fc; border-radius: 20px; padding: 6px 12px; font-size: 11px; display: inline-flex; align-items: center; gap: 7px; }
+    .tag-dot { width: 6px; height: 6px; border-radius: 50%; background: #b3a0d7; }
+    .equation {
+      direction: ltr; unicode-bidi: isolate; display: flex; align-items: center; justify-content: center;
+      gap: clamp(8px, 1.8vw, 20px); width: 100%; margin: 21px 0 16px;
+      font-size: clamp(45px, 6.5vw, 74px); font-weight: 700; line-height: 1.25; letter-spacing: -2px;
+      font-variant-numeric: tabular-nums; white-space: nowrap;
+    }
+    .equation .operator { color: #b6b3c3; font-weight: 400; font-size: .74em; }
+    .equation .unknown { color: var(--violet); background: #f4f0fb; border-radius: 22px; padding: 2px 12px; min-width: 1.1em; }
+    .question-hint { color: var(--muted); font-size: 13px; line-height: 1.8; margin: 0; min-height: 47px; max-width: 310px; }
+    .pending-level { color: var(--violet-dark); font-size: 11px; min-height: 20px; margin: 9px 0 0; text-align: center; }
+    .answer-pane { min-width: 0; }
+    .answer-label { display: block; color: #818695; font-size: 11px; margin-bottom: 7px; }
+    .answer-box { position: relative; }
+    #answer {
+      width: 100%; height: 59px; padding: 10px 18px; border: 2px solid #e6dff2; background: #fcfbfe;
+      color: var(--violet-dark); border-radius: 18px; text-align: center; font-size: 29px;
+      font-weight: 650; direction: ltr; caret-color: var(--violet); outline-offset: 2px;
+    }
+    #answer:disabled { opacity: 1; -webkit-text-fill-color: var(--violet-dark); }
+    #answer::placeholder { color: #c3b9d5; opacity: 1; }
+    .number-pad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; direction: ltr; margin: 10px 0; }
+    .number-pad button {
+      height: 50px; min-height: 48px; border: 1px solid #edebf2; border-radius: 16px; background: #f5f4f8;
+      color: #566074; font-size: 24px; font-weight: 650; user-select: none; -webkit-user-select: none;
+    }
+    .number-pad button:hover:not(:disabled) { background: #eeebf6; border-color: #d7cdea; }
+    .number-pad button:active:not(:disabled) { background: #e4dcef; }
+    .number-pad .edit { color: #9692a2; font-size: 12px; font-weight: 500; direction: rtl; }
+    .choice-pad { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; margin: 25px 0 10px; direction: ltr; }
+    .choice-button {
+      min-height: 76px; border: 2px solid #e6dff2; border-radius: 19px; background: #fcfbfe;
+      color: var(--violet-dark); font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums;
+    }
+    .choice-button:hover:not(:disabled) { background: var(--lilac); border-color: #cbbce8; }
+    .primary { background: var(--violet); color: #fff; border: 1px solid var(--violet); border-radius: 17px; padding: 12px 18px; font-weight: 650; font-size: 15px; min-height: 51px; }
+    .primary:hover:not(:disabled) { background: var(--violet-dark); border-color: var(--violet-dark); }
+    #actionButton { width: 100%; }
+    .feedback { gap: 10px; min-height: 62px; padding: 13px 25px; background: #fafaf9; border-top: 1px solid #efedf0; }
+    .feedback-icon { width: 30px; height: 30px; display: grid; place-items: center; flex-shrink: 0; background: #efedf5; border-radius: 11px; color: #9a8bb7; font-size: 16px; }
+    .feedback-copy { font-size: 12px; line-height: 1.65; }
+    .feedback.success { background: #eff8f2; color: #327b57; }
+    .feedback.success .feedback-icon { background: #daeedf; color: var(--green); }
+    .feedback.miss { background: #fdf4ef; color: #a56e51; }
+    .feedback.miss .feedback-icon { background: #f6e5d9; color: var(--coral); }
+    .footer { display: flex; justify-content: space-between; gap: 20px; color: #9a9ca7; font-size: 11px; line-height: 1.7; margin-top: 16px; }
+    .footer span:last-child { text-align: end; }
+    .paused .equation { opacity: .38; }
+    .paused .question-tag { background: #f3eee3; color: #9b8459; }
+    dialog {
+      color: var(--ink); background: #fffefd; border: 1px solid #ebe6f0; border-radius: 28px;
+      padding: 27px; width: min(445px, calc(100% - 28px)); max-height: calc(100dvh - 28px);
+      overflow-y: auto; box-shadow: 0 22px 100px #5f57752b; overscroll-behavior: contain;
+    }
+    dialog::backdrop { background: #52546545; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+    .dialog-heading { justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+    dialog h2 { margin: 0; font-size: 22px; }
+    dialog p, dialog li { color: #778091; font-size: 14px; line-height: 1.9; }
+    dialog ol { padding-inline-start: 23px; margin-block: 16px; }
+    dialog li { padding-inline-start: 3px; margin-bottom: 9px; }
+    dialog strong { color: #525b71; font-weight: 600; }
+    .close { font-size: 24px; padding: 2px; }
+    .dialog-actions { gap: 10px; margin-top: 22px; }
+    .dialog-actions button { flex: 1; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    @media (max-width: 800px) {
+      .shell { padding: max(16px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left)); }
+      .toolbar { padding: 14px 18px; gap: 10px; }
+      .game-settings { gap: 12px; }
+      .difficulty, .mode-setting { gap: 9px; }
+      .level { padding: 7px 10px; gap: 5px; }
+      .play-area { grid-template-columns: minmax(0, 1fr) 280px; gap: 23px; padding: 23px; }
+      .equation { font-size: 56px; gap: 10px; }
+      .score { padding: 14px; gap: 9px; }
+    }
+    @media (max-width: 620px) {
+      .header { margin-bottom: 17px; flex-wrap: wrap; }
+      .header-actions { margin-inline-start: auto; }
+      .brand-icon { width: 43px; height: 43px; font-size: 30px; }
+      h1 { font-size: 23px; }
+      .subtitle { font-size: 11px; }
+      .header-actions .quiet { padding: 9px 12px; font-size: 12px; }
+      .scores { gap: 7px; margin-bottom: 13px; }
+      .score { padding: 13px 10px; flex-wrap: wrap; gap: 6px; border-radius: 19px; }
+      .score-icon { display: none; }
+      .score-value { font-size: 25px; }
+      .score-label { font-size: 11px; }
+      .toolbar { padding: 13px; align-items: stretch; }
+      .game-settings { width: 100%; gap: 9px; }
+      .difficulty, .mode-setting { flex: 1 1 100%; }
+      .difficulty-options { flex: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+      .mode-options { flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+      .level { flex-direction: column; justify-content: center; gap: 2px; padding: 7px 4px; }
+      .mode-button { padding: 8px 5px; }
+      .level span { font-size: 10px; }
+      .section-label { display: none; }
+      #pauseButton { width: 100%; }
+      .play-area { grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 17px 21px 21px; }
+      .question-content { padding: 12px 0 0; }
+      .equation { font-size: 59px; margin: 12px 0 9px; }
+      .question-hint { min-height: 0; font-size: 12px; }
+      .pending-level { margin-top: 4px; min-height: 16px; }
+      .number-pad { gap: 9px; }
+      .number-pad button { height: 53px; }
+      .feedback { padding: 13px 18px; }
+      .footer { font-size: 10px; gap: 10px; }
+    }
+    @media (max-height: 740px) and (min-width: 621px) {
+      .shell { padding-top: 14px; padding-bottom: 12px; }
+      .header { margin-bottom: 13px; }
+      .scores { margin-bottom: 13px; }
+      .score { padding-block: 12px; }
+      .toolbar { padding-block: 12px; }
+      .play-area { padding-block: 18px; }
+      .feedback { min-height: 52px; padding-block: 9px; }
+      .footer { margin-top: 11px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="header">
+      <div class="brand">
+        <span class="brand-icon" aria-hidden="true">+</span>
+        <div><h1>עוד ועוד</h1><p class="subtitle">חיבור קטן, הצלחה גדולה.</p></div>
+      </div>
+      <nav class="header-actions" aria-label="אפשרויות המשחק">
+        <button class="quiet" id="helpButton" type="button">איך משחקים?</button>
+        <button class="quiet" id="resetButton" type="button" disabled>מתחילים מחדש</button>
+      </nav>
+    </header>
+
+    <section class="scores" aria-label="התוצאות שלכם">
+      <div class="score correct"><span class="score-icon" aria-hidden="true">✓</span><span class="score-label">תשובות נכונות</span><strong class="score-value" id="correctCount">0</strong></div>
+      <div class="score wrong"><span class="score-icon" aria-hidden="true">×</span><span class="score-label">טעויות</span><strong class="score-value" id="wrongCount">0</strong></div>
+      <div class="score total"><span class="score-icon" aria-hidden="true">=</span><span class="score-label">סך הכול</span><strong class="score-value" id="totalCount">0</strong></div>
+    </section>
+
+    <section class="game-card" id="gameCard" aria-label="משחק החיבור">
+      <div class="toolbar">
+        <div class="game-settings">
+          <div class="difficulty">
+            <span class="section-label" id="difficultyLabel">הקצב שלכם</span>
+            <div class="difficulty-options" role="group" aria-labelledby="difficultyLabel">
+              <button class="level" data-seconds="12" type="button" aria-pressed="true" aria-label="קל, 12 שניות לתרגיל"><strong>בנחת</strong><span>12 שניות</span></button>
+              <button class="level" data-seconds="8" type="button" aria-pressed="false" aria-label="בינוני, 8 שניות לתרגיל"><strong>זורם</strong><span>8 שניות</span></button>
+              <button class="level" data-seconds="5" type="button" aria-pressed="false" aria-label="קשה, 5 שניות לתרגיל"><strong>זריז</strong><span>5 שניות</span></button>
+              <button class="level" data-seconds="4" type="button" aria-pressed="false" aria-label="מאתגר, 4 שניות לתרגיל"><strong>בזק</strong><span>4 שניות</span></button>
+            </div>
+          </div>
+          <div class="mode-setting">
+            <span class="section-label" id="modeLabel">איך עונים?</span>
+            <div class="mode-options" role="group" aria-labelledby="modeLabel">
+              <button class="mode-button" data-mode="typing" type="button" aria-pressed="true">מקלידים</button>
+              <button class="mode-button" data-mode="choices" type="button" aria-pressed="false">בוחרים מתוך 4</button>
+            </div>
+          </div>
+        </div>
+        <button class="quiet" id="pauseButton" type="button" aria-pressed="false" disabled>השהיה Ⅱ</button>
+      </div>
+
+      <div class="play-area">
+        <div class="question-pane">
+          <div id="timer" aria-label="הזמן לתרגיל">
+            <div class="timer-heading"><span id="timerCaption">הזמן יתחיל כשתהיו מוכנים</span><span class="time-pill"><strong id="timeLeft" role="timer" aria-live="off">12.0</strong><small>שניות</small></span></div>
+            <div class="timer-track" id="timerTrack" role="progressbar" aria-label="הזמן שנותר לתרגיל" aria-valuemin="0" aria-valuemax="12" aria-valuenow="12"><div id="timerFill"></div></div>
+          </div>
+          <div class="question-content">
+            <span class="question-tag"><span class="tag-dot" aria-hidden="true"></span><span id="questionTag">רק חיבור. רק 0 עד 9.</span></span>
+            <div class="equation" id="equation" dir="ltr" role="math" aria-label="תרגיל החיבור יופיע עם תחילת המשחק">
+              <span id="operandA" aria-hidden="true">?</span><span class="operator" aria-hidden="true">+</span><span id="operandB" aria-hidden="true">?</span><span class="operator" aria-hidden="true">=</span><span class="unknown" aria-hidden="true">?</span>
+            </div>
+            <p class="question-hint" id="questionHint">בחרו קצב ולחצו על ״מתחילים!״.<br>כל תרגיל הוא הזדמנות להצליח.</p>
+          </div>
+          <p class="pending-level" id="pendingLevel" role="status"></p>
+        </div>
+
+        <form class="answer-pane" id="answerForm" novalidate>
+          <div id="typingAnswer">
+            <label class="answer-label" for="answer">התשובה שלכם</label>
+            <div class="answer-box"><input id="answer" dir="ltr" type="text" inputmode="none" readonly disabled maxlength="2" autocomplete="off" placeholder="?" aria-describedby="questionHint feedbackText"></div>
+            <div class="number-pad" role="group" aria-label="לוח ספרות להזנת התשובה" dir="ltr">
+              <button type="button" data-key="1" disabled>1</button><button type="button" data-key="2" disabled>2</button><button type="button" data-key="3" disabled>3</button>
+              <button type="button" data-key="4" disabled>4</button><button type="button" data-key="5" disabled>5</button><button type="button" data-key="6" disabled>6</button>
+              <button type="button" data-key="7" disabled>7</button><button type="button" data-key="8" disabled>8</button><button type="button" data-key="9" disabled>9</button>
+              <button class="edit" type="button" data-key="clear" aria-label="ניקוי התשובה" disabled>ניקוי</button><button type="button" data-key="0" disabled>0</button><button class="edit" type="button" data-key="backspace" aria-label="מחיקת ספרה" disabled>⌫ מחיקה</button>
+            </div>
+          </div>
+          <div id="choiceAnswer" hidden>
+            <span class="answer-label" id="choiceLabel">בחרו את התשובה הנכונה</span>
+            <div class="choice-pad" id="choicePad" role="group" aria-labelledby="choiceLabel"></div>
+          </div>
+          <button class="primary" id="actionButton" type="submit">מתחילים! ←</button>
+        </form>
+      </div>
+
+      <div class="feedback" id="feedback" role="status" aria-live="polite" aria-atomic="true">
+        <span class="feedback-icon" id="feedbackIcon" aria-hidden="true">✦</span>
+        <span class="feedback-copy" id="feedbackText">בלי סוף, בלי לחץ. בוחרים קצב ומתאמנים.</span>
+      </div>
+    </section>
+    <footer class="footer"><span>חיבור של מספרים מ־0 עד 9 · המשחק ממשיך כל עוד רוצים</span><span>אפשר לטעות. ככה לומדים.</span></footer>
+    <p class="sr-only" id="announcement" aria-live="polite" aria-atomic="true"></p>
+  </main>
+
+  <dialog id="helpDialog" aria-labelledby="helpTitle">
+    <div class="dialog-heading"><h2 id="helpTitle">נעים להכיר, חיבור.</h2><button class="quiet close" type="button" data-close="help" aria-label="סגירת ההוראות">×</button></div>
+    <p>משחק קטן לתרגול חיבור. בכל תרגיל מופיעים <strong>שני מספרים בין 0 ל־9</strong>. התשובה יכולה להיות בין 0 ל־18.</p>
+    <ol>
+      <li>בחרו זמן לכל תרגיל: <strong>12, 8, 5 או 4 שניות</strong>.</li>
+      <li>בחרו אם להקליד את התשובה או לבחור אותה מתוך <strong>4 תשובות שונות</strong>.</li>
+      <li>במצב הקלדה, הקישו על הספרות ואז על <strong>בדיקת התשובה</strong>. במצב בחירה, פשוט הקישו על התשובה הנכונה.</li>
+      <li>תשובה נכונה מוסיפה להצלחות. תשובה שגויה או תום הזמן מוסיפים לטעות אחת בלבד.</li>
+      <li>אחרי משוב קצר מופיע תרגיל חדש, ללא הגבלת סבבים. סך הכול הוא מספר התרגילים שכבר הסתיימו.</li>
+    </ol>
+    <p>שינוי הקצב או אופן המענה בזמן המשחק חל מהתרגיל הבא ואינו מאפס את התוצאות. כפתור ההשהיה, פתיחת חלון עזרה ומעבר ללשונית אחרת עוצרים את השעון.</p>
+    <p>אין צורך במקלדת. במצב הקלדה אפשר גם להקליד ספרות ולאשר במקש האישור.</p>
+    <button class="primary" style="width:100%" type="button" data-close="help">הבנתי, ממשיכים</button>
+  </dialog>
+  <dialog id="resetDialog" aria-labelledby="resetTitle">
+    <div class="dialog-heading"><h2 id="resetTitle">מתחילים דף חדש?</h2></div>
+    <p>התוצאות והתרגיל הנוכחי יתאפסו. הקצב ואופן המענה שבחרתם יישמרו. המשחק מושהה עד שתחליטו.</p>
+    <div class="dialog-actions"><button class="quiet" type="button" data-close="reset" autofocus>חוזרים למשחק</button><button class="primary" id="confirmReset" type="button">כן, מתחילים מחדש</button></div>
+  </dialog>
+  <noscript><p style="padding:24px;text-align:center">כדי לשחק, יש לאפשר הרצת סקריפטים בדפדפן.</p></noscript>
+
+  <script>
+    "use strict";
+
+    const LEVELS = Object.freeze([12, 8, 5, 4]);
+    const FEEDBACK_MS = 1400;
+    const $ = id => document.getElementById(id);
+
+    class AdditionMath {
+      constructor(random = Math.random) { this.random = random; }
+      next() {
+        const a = Math.floor(this.random() * 10);
+        const b = Math.floor(this.random() * 10);
+        return Object.freeze({ a, b, answer: a + b });
+      }
+      choices(problem) {
+        const alternatives = Array.from({ length: 19 }, (_, value) => value)
+          .filter(value => value !== problem.answer);
+        this.shuffle(alternatives);
+        return Object.freeze(this.shuffle([problem.answer, ...alternatives.slice(0, 3)]));
+      }
+      shuffle(values) {
+        for (let index = values.length - 1; index > 0; index--) {
+          const other = Math.floor(this.random() * (index + 1));
+          [values[index], values[other]] = [values[other], values[index]];
+        }
+        return values;
+      }
+      isCorrect(problem, text) {
+        return /^\d{1,2}$/.test(text) && Number(text) === problem.answer;
+      }
+    }
+
+    class AdditionGame {
+      constructor() {
+        this.math = new AdditionMath();
+        this.selectedSeconds = 12;
+        this.selectedMode = "typing";
+        this.pauseReasons = new Set();
+        this.lastTick = performance.now();
+        this.bindEvents();
+        this.reset();
+        this.frame = this.frame.bind(this);
+        requestAnimationFrame(this.frame);
+      }
+      get paused() { return this.pauseReasons.size > 0; }
+      get total() { return this.correct + this.wrong; }
+      get active() { return this.phase === "question" && !this.paused; }
+      reset() {
+        document.querySelectorAll("dialog[open]").forEach(dialog => dialog.close());
+        this.phase = "ready";
+        this.correct = 0; this.wrong = 0;
+        this.problem = null;
+        this.currentMode = this.selectedMode;
+        this.answerChoices = [];
+        this.currentSeconds = this.selectedSeconds;
+        this.remainingMs = this.currentSeconds * 1000;
+        this.feedbackRemainingMs = 0;
+        this.result = null;
+        this.pauseReasons.clear();
+        if (document.hidden) this.pauseReasons.add("hidden");
+        this.lastTick = performance.now();
+        $("answer").value = "";
+        $("operandA").textContent = "?"; $("operandB").textContent = "?";
+        $("equation").setAttribute("aria-label", "תרגיל החיבור יופיע עם תחילת המשחק");
+        $("announcement").textContent = "";
+        this.setFeedback("בלי סוף, בלי לחץ. בוחרים קצב ומתאמנים.");
+        this.render();
+      }
+      bindEvents() {
+        document.querySelectorAll("[data-seconds]").forEach(button => {
+          button.addEventListener("click", () => this.changeLevel(Number(button.dataset.seconds)));
+        });
+        document.querySelectorAll("[data-mode]").forEach(button => {
+          button.addEventListener("click", () => this.changeMode(button.dataset.mode));
+        });
+        document.querySelectorAll("[data-key]").forEach(button => {
+          button.addEventListener("click", () => this.editAnswer(button.dataset.key));
+        });
+        $("answerForm").addEventListener("submit", event => {
+          event.preventDefault();
+          if (this.phase === "ready") this.start(); else this.submit();
+        });
+        $("answer").addEventListener("keydown", event => {
+          if (event.ctrlKey || event.metaKey || event.altKey) return;
+          if (/^\d$/.test(event.key)) { event.preventDefault(); this.editAnswer(event.key); }
+          else if (event.key === "Backspace" || event.key === "Delete") {
+            event.preventDefault(); this.editAnswer(event.key === "Delete" ? "clear" : "backspace");
+          } else if (event.key === "Enter") {
+            event.preventDefault(); this.submit();
+          }
+        });
+        $("pauseButton").addEventListener("click", () => this.setPause("manual", !this.pauseReasons.has("manual")));
+        $("helpButton").addEventListener("click", () => this.openDialog("help"));
+        $("resetButton").addEventListener("click", () => this.openDialog("reset"));
+        document.querySelectorAll("[data-close]").forEach(button => {
+          button.addEventListener("click", () => this.closeDialog(button.dataset.close));
+        });
+        for (const name of ["help", "reset"]) {
+          $(`${name}Dialog`).addEventListener("cancel", event => {
+            event.preventDefault(); this.closeDialog(name);
+          });
+        }
+        $("confirmReset").addEventListener("click", () => this.reset());
+        document.addEventListener("visibilitychange", () => this.setPause("hidden", document.hidden));
+      }
+      start() {
+        this.sync();
+        if (this.phase !== "ready" || this.paused) return;
+        this.nextQuestion();
+      }
+      nextQuestion() {
+        this.problem = this.math.next();
+        this.phase = "question";
+        this.currentMode = this.selectedMode;
+        this.answerChoices = this.currentMode === "choices" ? this.math.choices(this.problem) : [];
+        this.currentSeconds = this.selectedSeconds;
+        this.remainingMs = this.currentSeconds * 1000;
+        this.feedbackRemainingMs = 0;
+        this.result = null;
+        $("answer").value = "";
+        $("answer").removeAttribute("aria-invalid");
+        $("operandA").textContent = this.problem.a;
+        $("operandB").textContent = this.problem.b;
+        $("equation").setAttribute("aria-label", `כמה הם ${this.problem.a} ועוד ${this.problem.b}?`);
+        $("announcement").textContent = `תרגיל ${this.total + 1}: ${this.problem.a} ועוד ${this.problem.b}. לרשותכם ${this.currentSeconds} שניות.`;
+        this.setFeedback(this.currentMode === "choices"
+          ? "אחת מארבע התשובות נכונה. בחרו בה לפני שהזמן נגמר!"
+          : "הקישו על הספרות ואז על בדיקת התשובה. אתם יכולים!");
+        this.render();
+        if (this.currentMode === "typing" && (document.activeElement === document.body || $("answerForm").contains(document.activeElement))) {
+          $("answer").focus({ preventScroll: true });
+        } else if (this.currentMode === "choices") {
+          $("choicePad").querySelector("button")?.focus({ preventScroll: true });
+        }
+      }
+      // Resolve elapsed time before every action as well as every frame, so late taps cannot beat the deadline.
+      sync(now = performance.now()) {
+        const tick = Math.max(now, this.lastTick);
+        const elapsed = tick - this.lastTick;
+        this.lastTick = tick;
+        if (this.paused || this.phase === "ready") return;
+        if (this.phase === "question") {
+          this.remainingMs = Math.max(0, this.remainingMs - elapsed);
+          if (this.remainingMs === 0) this.resolve(false, "timeout");
+        } else if (this.phase === "feedback") {
+          this.feedbackRemainingMs = Math.max(0, this.feedbackRemainingMs - elapsed);
+          if (this.feedbackRemainingMs === 0) this.nextQuestion();
+        }
+      }
+      frame(now) {
+        this.sync(now);
+        this.renderClock();
+        requestAnimationFrame(this.frame);
+      }
+      changeLevel(seconds) {
+        if (!LEVELS.includes(seconds)) throw new RangeError("רמת קושי לא מוכרת.");
+        this.sync();
+        this.selectedSeconds = seconds;
+        if (this.phase === "ready") {
+          this.currentSeconds = seconds;
+          this.remainingMs = seconds * 1000;
+        }
+        this.render();
+      }
+      changeMode(mode) {
+        if (!["typing", "choices"].includes(mode)) throw new RangeError("מצב מענה לא מוכר.");
+        this.sync();
+        this.selectedMode = mode;
+        if (this.phase === "ready") this.currentMode = mode;
+        this.render();
+      }
+      setPause(reason, paused) {
+        this.sync();
+        if (paused) this.pauseReasons.add(reason); else this.pauseReasons.delete(reason);
+        this.lastTick = performance.now();
+        this.render();
+      }
+      openDialog(name) {
+        if (document.querySelector("dialog[open]")) return;
+        this.setPause(name, true);
+        $(`${name}Dialog`).showModal();
+      }
+      closeDialog(name) {
+        $(`${name}Dialog`).close();
+        this.setPause(name, false);
+      }
+      editAnswer(key) {
+        this.sync();
+        if (!this.active || this.currentMode !== "typing") return;
+        const input = $("answer");
+        const start = input.selectionStart ?? input.value.length;
+        const end = input.selectionEnd ?? start;
+        let value = input.value, cursor = start;
+        if (key === "clear") {
+          value = ""; cursor = 0;
+        } else if (key === "backspace") {
+          const from = start === end ? Math.max(0, start - 1) : start;
+          value = value.slice(0, from) + value.slice(end); cursor = from;
+        } else if (/^\d$/.test(key)) {
+          value = value.slice(0, start) + key + value.slice(end);
+          if (value.length > 2) {
+            this.setFeedback("לתשובה מספיקות שתי ספרות. אפשר למחוק או לנקות ולנסות שוב.");
+            return;
+          }
+          cursor = start + 1;
+        } else return;
+        input.value = value;
+        input.removeAttribute("aria-invalid");
+        input.focus({ preventScroll: true });
+        input.setSelectionRange(cursor, cursor);
+        this.setFeedback("מוכנים? הקישו על בדיקת התשובה.");
+      }
+      submit() {
+        this.sync();
+        if (!this.active || this.currentMode !== "typing") return;
+        const input = $("answer");
+        if (!/^\d{1,2}$/.test(input.value)) {
+          input.setAttribute("aria-invalid", "true");
+          this.setFeedback("קודם מזינים תשובה בעזרת הספרות, ואז בודקים.");
+          input.focus({ preventScroll: true });
+          return;
+        }
+        this.resolve(this.math.isCorrect(this.problem, input.value), "answer");
+      }
+      chooseAnswer(answer) {
+        this.sync();
+        if (!this.active || this.currentMode !== "choices" || !this.answerChoices.includes(answer)) return;
+        this.resolve(answer === this.problem.answer, "answer");
+      }
+      renderChoices() {
+        const pad = $("choicePad");
+        pad.replaceChildren(...this.answerChoices.map(answer => {
+          const button = document.createElement("button");
+          button.className = "choice-button";
+          button.type = "button";
+          button.textContent = answer;
+          button.disabled = !this.active;
+          button.setAttribute("aria-label", `התשובה ${answer}`);
+          button.addEventListener("click", () => this.chooseAnswer(answer));
+          return button;
+        }));
+      }
+      resolve(correct, reason) {
+        if (this.phase !== "question") return;
+        if (correct) this.correct++; else this.wrong++;
+        this.phase = "feedback";
+        this.feedbackRemainingMs = FEEDBACK_MS;
+        this.result = { correct, reason, answer: this.problem.answer };
+        if (correct) {
+          this.setFeedback("כל הכבוד! תשובה נכונה. ממשיכים לתרגיל הבא.", "success");
+        } else {
+          const prefix = reason === "timeout" ? "הזמן נגמר." : "לא הפעם, וזה בסדר.";
+          this.setFeedback(`${prefix} התשובה הנכונה היא ${this.problem.answer}. מיד מנסים שוב.`, "miss");
+        }
+        this.render();
+      }
+      setFeedback(text, style = "") {
+        $("feedback").className = `feedback${style ? ` ${style}` : ""}`;
+        $("feedbackIcon").textContent = style === "success" ? "✓" : style === "miss" ? "♡" : "✦";
+        $("feedbackText").textContent = text;
+      }
+      renderClock() {
+        const shown = (Math.ceil(this.remainingMs / 100) / 10).toFixed(1);
+        if ($("timeLeft").textContent !== shown) {
+          $("timeLeft").textContent = shown;
+          $("timerTrack").setAttribute("aria-valuenow", shown);
+        }
+        $("timerFill").style.transform = `scaleX(${this.remainingMs / (this.currentSeconds * 1000)})`;
+        $("timer").classList.toggle("urgent", this.phase === "question" && this.remainingMs <= 2000);
+      }
+      render() {
+        $("correctCount").textContent = this.correct;
+        $("wrongCount").textContent = this.wrong;
+        $("totalCount").textContent = this.total;
+        $("resetButton").disabled = this.phase === "ready";
+        const manual = this.pauseReasons.has("manual");
+        $("pauseButton").disabled = this.phase === "ready";
+        $("pauseButton").textContent = manual ? "המשך ▶" : "השהיה Ⅱ";
+        $("pauseButton").setAttribute("aria-pressed", String(manual));
+        $("gameCard").classList.toggle("paused", this.paused && this.phase !== "ready");
+        $("answer").disabled = !this.active;
+        document.querySelectorAll("[data-key]").forEach(button => { button.disabled = !this.active; });
+        document.querySelectorAll("[data-seconds]").forEach(button => {
+          button.setAttribute("aria-pressed", String(Number(button.dataset.seconds) === this.selectedSeconds));
+        });
+        document.querySelectorAll("[data-mode]").forEach(button => {
+          button.setAttribute("aria-pressed", String(button.dataset.mode === this.selectedMode));
+        });
+        const shownMode = this.phase === "ready" ? this.selectedMode : this.currentMode;
+        $("typingAnswer").hidden = shownMode !== "typing";
+        $("choiceAnswer").hidden = shownMode !== "choices" || this.phase === "ready";
+        if (shownMode === "choices" && this.phase !== "ready") this.renderChoices();
+        $("actionButton").disabled = this.paused || this.phase === "feedback";
+        $("actionButton").hidden = this.phase !== "ready" && shownMode === "choices";
+        $("actionButton").textContent = this.phase === "ready" ? "מתחילים! ←" : this.paused ? "המשחק מושהה" : this.phase === "feedback" ? "מיד מגיע תרגיל חדש…" : "בדיקת התשובה ←";
+        $("timerTrack").setAttribute("aria-valuemax", String(this.currentSeconds));
+        $("timerTrack").setAttribute("aria-valuenow", (this.remainingMs / 1000).toFixed(1));
+        $("timerCaption").textContent = this.phase === "ready" ? "הזמן יתחיל כשתהיו מוכנים" : this.paused ? "השעון עצור" : this.phase === "feedback" ? "רגע קטן לפני שממשיכים" : `${this.currentSeconds} שניות לכל תרגיל`;
+        $("questionTag").textContent = this.phase === "ready" ? "רק חיבור. רק 0 עד 9." : this.paused ? "אפשר לנשום. אנחנו מחכים." : `תרגיל ${this.phase === "feedback" ? this.total : this.total + 1}`;
+        $("questionHint").textContent = this.phase === "ready" ? "בחרו קצב ואופן מענה, ואז לחצו על ״מתחילים!״." : this.paused ? "ממשיכים בדיוק מאותה נקודה כשחוזרים למשחק." : this.phase === "feedback" ? `התשובה היא ${this.result.answer}. התרגיל הבא כבר בדרך.` : shownMode === "choices" ? "מה הסכום? בחרו תשובה אחת מתוך ארבע." : "מה הסכום? הזינו תשובה ובדקו לפני שהזמן נגמר.";
+        const pending = [];
+        if (this.phase !== "ready" && this.selectedSeconds !== this.currentSeconds) pending.push(`${this.selectedSeconds} שניות`);
+        if (this.phase !== "ready" && this.selectedMode !== this.currentMode) pending.push(this.selectedMode === "choices" ? "בחירה מתוך 4" : "הקלדת תשובה");
+        $("pendingLevel").textContent = pending.length ? `מהתרגיל הבא: ${pending.join(" · ")}. התוצאות נשמרות.` : "";
+        this.renderClock();
+      }
+    }
+
+    const game = new AdditionGame();
+  </script>
+</body>
+</html>
