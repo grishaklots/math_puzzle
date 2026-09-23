@@ -329,7 +329,7 @@
       <li>בחרו זמן לכל תרגיל: <strong>12, 8, 5 או 4 שניות</strong>, או בטלו לגמרי את הגבלת הזמן.</li>
       <li>בחרו אם להקליד את התשובה או לבחור אותה מתוך <strong>4 תשובות שונות</strong>.</li>
       <li>במצב הקלדה, הקישו על הספרות ואז על <strong>בדיקת התשובה</strong>. במצב בחירה, פשוט הקישו על התשובה הנכונה.</li>
-      <li>תשובה נכונה מוסיפה להצלחות. תשובה שגויה או תום הזמן מוסיפים לטעות אחת בלבד.</li>
+      <li>תשובה נכונה מוסיפה להצלחות. במצב עם שעון, תשובה שגויה או תום הזמן מוסיפים לטעות אחת בלבד. ללא הגבלת זמן ממשיכים לנסות את אותו התרגיל עד שעונים נכון.</li>
       <li>אחרי משוב קצר מופיע תרגיל חדש, ללא הגבלת סבבים. סך הכול הוא מספר התרגילים שכבר הסתיימו.</li>
     </ol>
     <p>שינוי הקצב או אופן המענה בזמן המשחק חל מהתרגיל הבא ואינו מאפס את התוצאות. כפתור ההשהיה, פתיחת חלון עזרה ומעבר ללשונית אחרת עוצרים את השעון.</p>
@@ -589,6 +589,17 @@
       }
       resolve(correct, reason) {
         if (this.phase !== "question") return;
+        if (!correct && this.currentSeconds === null) {
+          if (this.currentMode === "typing") {
+            $("answer").value = "";
+            $("answer").setAttribute("aria-invalid", "true");
+            $("answer").focus({ preventScroll: true });
+          }
+          this.setFeedback("לא הפעם. נסו שוב עד שתמצאו את התשובה הנכונה.", "miss");
+          $("announcement").textContent = "התשובה אינה נכונה. נסו שוב באותו התרגיל.";
+          this.render();
+          return;
+        }
         if (correct) this.correct++; else this.wrong++;
         this.phase = "feedback";
         this.feedbackRemainingMs = FEEDBACK_MS;
