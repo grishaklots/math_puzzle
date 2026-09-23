@@ -264,6 +264,7 @@
               <button class="level" data-seconds="8" type="button" aria-pressed="false" aria-label="בינוני, 8 שניות לתרגיל"><strong>זורם</strong><span>8 שניות</span></button>
               <button class="level" data-seconds="5" type="button" aria-pressed="false" aria-label="קשה, 5 שניות לתרגיל"><strong>זריז</strong><span>5 שניות</span></button>
               <button class="level" data-seconds="4" type="button" aria-pressed="false" aria-label="מאתגר, 4 שניות לתרגיל"><strong>בזק</strong><span>4 שניות</span></button>
+              <button class="level" id="unlimitedButton" type="button" aria-pressed="false" aria-label="ללא הגבלת זמן לתרגיל"><strong>בלי שעון</strong><span>ללא הגבלה</span></button>
             </div>
           </div>
           <div class="mode-setting">
@@ -280,7 +281,7 @@
       <div class="play-area">
         <div class="question-pane">
           <div id="timer" aria-label="הזמן לתרגיל">
-            <div class="timer-heading"><span id="timerCaption">הזמן יתחיל כשתהיו מוכנים</span><span class="time-pill"><strong id="timeLeft" role="timer" aria-live="off">12.0</strong><small>שניות</small></span></div>
+            <div class="timer-heading"><span id="timerCaption">הזמן יתחיל כשתהיו מוכנים</span><span class="time-pill"><strong id="timeLeft" role="timer" aria-live="off">12.0</strong><small id="timeUnit">שניות</small></span></div>
             <div class="timer-track" id="timerTrack" role="progressbar" aria-label="הזמן שנותר לתרגיל" aria-valuemin="0" aria-valuemax="12" aria-valuenow="12"><div id="timerFill"></div></div>
           </div>
           <div class="question-content">
@@ -325,7 +326,7 @@
     <div class="dialog-heading"><h2 id="helpTitle">נעים להכיר, חיבור.</h2><button class="quiet close" type="button" data-close="help" aria-label="סגירת ההוראות">×</button></div>
     <p>משחק קטן לתרגול חיבור. בכל תרגיל מופיעים <strong>שני מספרים בין 0 ל־9</strong>. התשובה יכולה להיות בין 0 ל־18.</p>
     <ol>
-      <li>בחרו זמן לכל תרגיל: <strong>12, 8, 5 או 4 שניות</strong>.</li>
+      <li>בחרו זמן לכל תרגיל: <strong>12, 8, 5 או 4 שניות</strong>, או בטלו לגמרי את הגבלת הזמן.</li>
       <li>בחרו אם להקליד את התשובה או לבחור אותה מתוך <strong>4 תשובות שונות</strong>.</li>
       <li>במצב הקלדה, הקישו על הספרות ואז על <strong>בדיקת התשובה</strong>. במצב בחירה, פשוט הקישו על התשובה הנכונה.</li>
       <li>תשובה נכונה מוסיפה להצלחות. תשובה שגויה או תום הזמן מוסיפים לטעות אחת בלבד.</li>
@@ -397,7 +398,7 @@
         this.currentMode = this.selectedMode;
         this.answerChoices = [];
         this.currentSeconds = this.selectedSeconds;
-        this.remainingMs = this.currentSeconds * 1000;
+        this.remainingMs = this.currentSeconds === null ? 0 : this.currentSeconds * 1000;
         this.feedbackRemainingMs = 0;
         this.result = null;
         this.pauseReasons.clear();
@@ -414,6 +415,7 @@
         document.querySelectorAll("[data-seconds]").forEach(button => {
           button.addEventListener("click", () => this.changeLevel(Number(button.dataset.seconds)));
         });
+        $("unlimitedButton").addEventListener("click", () => this.changeLevel(null));
         document.querySelectorAll("[data-mode]").forEach(button => {
           button.addEventListener("click", () => this.changeMode(button.dataset.mode));
         });
@@ -458,7 +460,7 @@
         this.currentMode = this.selectedMode;
         this.answerChoices = this.currentMode === "choices" ? this.math.choices(this.problem) : [];
         this.currentSeconds = this.selectedSeconds;
-        this.remainingMs = this.currentSeconds * 1000;
+        this.remainingMs = this.currentSeconds === null ? 0 : this.currentSeconds * 1000;
         this.feedbackRemainingMs = 0;
         this.result = null;
         $("answer").value = "";
@@ -466,9 +468,9 @@
         $("operandA").textContent = this.problem.a;
         $("operandB").textContent = this.problem.b;
         $("equation").setAttribute("aria-label", `כמה הם ${this.problem.a} ועוד ${this.problem.b}?`);
-        $("announcement").textContent = `תרגיל ${this.total + 1}: ${this.problem.a} ועוד ${this.problem.b}. לרשותכם ${this.currentSeconds} שניות.`;
+        $("announcement").textContent = `תרגיל ${this.total + 1}: ${this.problem.a} ועוד ${this.problem.b}.${this.currentSeconds === null ? " אין הגבלת זמן." : ` לרשותכם ${this.currentSeconds} שניות.`}`;
         this.setFeedback(this.currentMode === "choices"
-          ? "אחת מארבע התשובות נכונה. בחרו בה לפני שהזמן נגמר!"
+          ? this.currentSeconds === null ? "אחת מארבע התשובות נכונה. בחרו בה כשתהיו מוכנים!" : "אחת מארבע התשובות נכונה. בחרו בה לפני שהזמן נגמר!"
           : "הקישו על הספרות ואז על בדיקת התשובה. אתם יכולים!");
         this.render();
         if (this.currentMode === "typing" && (document.activeElement === document.body || $("answerForm").contains(document.activeElement))) {
@@ -484,6 +486,7 @@
         this.lastTick = tick;
         if (this.paused || this.phase === "ready") return;
         if (this.phase === "question") {
+          if (this.currentSeconds === null) return;
           this.remainingMs = Math.max(0, this.remainingMs - elapsed);
           if (this.remainingMs === 0) this.resolve(false, "timeout");
         } else if (this.phase === "feedback") {
@@ -497,12 +500,12 @@
         requestAnimationFrame(this.frame);
       }
       changeLevel(seconds) {
-        if (!LEVELS.includes(seconds)) throw new RangeError("רמת קושי לא מוכרת.");
+        if (seconds !== null && !LEVELS.includes(seconds)) throw new RangeError("רמת קושי לא מוכרת.");
         this.sync();
         this.selectedSeconds = seconds;
-        if (this.phase === "ready") {
+        if (this.phase === "ready" || (seconds === null && this.phase === "question")) {
           this.currentSeconds = seconds;
-          this.remainingMs = seconds * 1000;
+          this.remainingMs = seconds === null ? 0 : seconds * 1000;
         }
         this.render();
       }
@@ -604,6 +607,14 @@
         $("feedbackText").textContent = text;
       }
       renderClock() {
+        const unlimited = this.currentSeconds === null;
+        $("timerTrack").hidden = unlimited;
+        $("timeUnit").textContent = unlimited ? "ללא הגבלה" : "שניות";
+        if (unlimited) {
+          $("timeLeft").textContent = "∞";
+          $("timer").classList.remove("urgent");
+          return;
+        }
         const shown = (Math.ceil(this.remainingMs / 100) / 10).toFixed(1);
         if ($("timeLeft").textContent !== shown) {
           $("timeLeft").textContent = shown;
@@ -627,6 +638,7 @@
         document.querySelectorAll("[data-seconds]").forEach(button => {
           button.setAttribute("aria-pressed", String(Number(button.dataset.seconds) === this.selectedSeconds));
         });
+        $("unlimitedButton").setAttribute("aria-pressed", String(this.selectedSeconds === null));
         document.querySelectorAll("[data-mode]").forEach(button => {
           button.setAttribute("aria-pressed", String(button.dataset.mode === this.selectedMode));
         });
@@ -637,13 +649,19 @@
         $("actionButton").disabled = this.paused || this.phase === "feedback";
         $("actionButton").hidden = this.phase !== "ready" && shownMode === "choices";
         $("actionButton").textContent = this.phase === "ready" ? "מתחילים! ←" : this.paused ? "המשחק מושהה" : this.phase === "feedback" ? "מיד מגיע תרגיל חדש…" : "בדיקת התשובה ←";
-        $("timerTrack").setAttribute("aria-valuemax", String(this.currentSeconds));
-        $("timerTrack").setAttribute("aria-valuenow", (this.remainingMs / 1000).toFixed(1));
-        $("timerCaption").textContent = this.phase === "ready" ? "הזמן יתחיל כשתהיו מוכנים" : this.paused ? "השעון עצור" : this.phase === "feedback" ? "רגע קטן לפני שממשיכים" : `${this.currentSeconds} שניות לכל תרגיל`;
+        if (this.currentSeconds !== null) {
+          $("timerTrack").setAttribute("aria-valuemax", String(this.currentSeconds));
+          $("timerTrack").setAttribute("aria-valuenow", (this.remainingMs / 1000).toFixed(1));
+        }
+        $("timerCaption").textContent = this.phase === "ready"
+          ? this.currentSeconds === null ? "אין הגבלת זמן" : "הזמן יתחיל כשתהיו מוכנים"
+          : this.paused ? "השעון עצור"
+          : this.phase === "feedback" ? "רגע קטן לפני שממשיכים"
+          : this.currentSeconds === null ? "מתקדמים בקצב שלכם" : `${this.currentSeconds} שניות לכל תרגיל`;
         $("questionTag").textContent = this.phase === "ready" ? "רק חיבור. רק 0 עד 9." : this.paused ? "אפשר לנשום. אנחנו מחכים." : `תרגיל ${this.phase === "feedback" ? this.total : this.total + 1}`;
-        $("questionHint").textContent = this.phase === "ready" ? "בחרו קצב ואופן מענה, ואז לחצו על ״מתחילים!״." : this.paused ? "ממשיכים בדיוק מאותה נקודה כשחוזרים למשחק." : this.phase === "feedback" ? `התשובה היא ${this.result.answer}. התרגיל הבא כבר בדרך.` : shownMode === "choices" ? "מה הסכום? בחרו תשובה אחת מתוך ארבע." : "מה הסכום? הזינו תשובה ובדקו לפני שהזמן נגמר.";
+        $("questionHint").textContent = this.phase === "ready" ? "בחרו קצב ואופן מענה, ואז לחצו על ״מתחילים!״." : this.paused ? "ממשיכים בדיוק מאותה נקודה כשחוזרים למשחק." : this.phase === "feedback" ? `התשובה היא ${this.result.answer}. התרגיל הבא כבר בדרך.` : shownMode === "choices" ? "מה הסכום? בחרו תשובה אחת מתוך ארבע." : this.currentSeconds === null ? "מה הסכום? הזינו תשובה ובדקו כשתהיו מוכנים." : "מה הסכום? הזינו תשובה ובדקו לפני שהזמן נגמר.";
         const pending = [];
-        if (this.phase !== "ready" && this.selectedSeconds !== this.currentSeconds) pending.push(`${this.selectedSeconds} שניות`);
+        if (this.phase !== "ready" && this.selectedSeconds !== this.currentSeconds) pending.push(this.selectedSeconds === null ? "ללא הגבלת זמן" : `${this.selectedSeconds} שניות`);
         if (this.phase !== "ready" && this.selectedMode !== this.currentMode) pending.push(this.selectedMode === "choices" ? "בחירה מתוך 4" : "הקלדת תשובה");
         $("pendingLevel").textContent = pending.length ? `מהתרגיל הבא: ${pending.join(" · ")}. התוצאות נשמרות.` : "";
         this.renderClock();
