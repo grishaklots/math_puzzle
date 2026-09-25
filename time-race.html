@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f6f5f0">
-  <meta name="description" content="משחק חיבור נעים ופשוט לטאבלט. מחברים מספרים מ־0 עד 9, בוחרים זמן לתרגיל ומשתפרים בקצב שלכם.">
-  <title>עוד ועוד — משחק חיבור</title>
+  <meta name="description" content="משחק חשבון נעים ופשוט לטאבלט. בוחרים מספר ספרות, חיבור או חיסור, זמן לתרגיל ומשתפרים בקצב שלכם.">
+  <title>עוד ועוד — משחק חשבון</title>
   <style>
     :root {
       color-scheme: light;
@@ -53,7 +53,7 @@
       margin: auto;
       padding: max(22px, env(safe-area-inset-top)) max(26px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(26px, env(safe-area-inset-left));
     }
-    .header, .brand, .header-actions, .score, .toolbar, .difficulty-options, .mode-options,
+    .header, .brand, .header-actions, .score, .toolbar, .difficulty-options, .mode-options, .setting-options,
     .timer-heading, .feedback, .dialog-heading, .dialog-actions { display: flex; align-items: center; }
     .header { justify-content: space-between; gap: 16px; margin-bottom: 22px; }
     .brand { gap: 13px; }
@@ -84,9 +84,9 @@
     .game-card { background: #fff; border: 1px solid #ebe9e7; border-radius: var(--radius); box-shadow: 0 15px 60px #52556c08; overflow: hidden; }
     .toolbar { justify-content: space-between; gap: 15px; padding: 18px 25px; border-bottom: 1px solid #f0eef3; flex-wrap: wrap; }
     .game-settings { display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
-    .difficulty, .mode-setting { display: flex; gap: 13px; align-items: center; flex-wrap: wrap; }
+    .difficulty, .mode-setting, .number-setting, .operation-setting { display: flex; gap: 13px; align-items: center; flex-wrap: wrap; }
     .section-label { font-size: 12px; font-weight: 650; color: var(--muted); }
-    .difficulty-options, .mode-options { gap: 7px; flex-wrap: wrap; }
+    .difficulty-options, .mode-options, .setting-options { gap: 7px; flex-wrap: wrap; }
     .level {
       display: flex; align-items: center; gap: 8px; padding: 8px 13px;
       background: #f8f8fa; border: 1px solid transparent; border-radius: 15px; color: #737a89;
@@ -95,12 +95,12 @@
     .level span { font-size: 11px; white-space: nowrap; }
     .level[aria-pressed="true"] { color: var(--violet-dark); background: var(--lilac); border-color: #d9cdef; }
     .level:hover { border-color: #c6badd; }
-    .mode-button {
+    .mode-button, .setting-button {
       padding: 8px 13px; background: #f8f8fa; border: 1px solid transparent;
       border-radius: 15px; color: #737a89; font-size: 12px; font-weight: 650;
     }
-    .mode-button[aria-pressed="true"] { color: var(--violet-dark); background: var(--lilac); border-color: #d9cdef; }
-    .mode-button:hover { border-color: #c6badd; }
+    .mode-button[aria-pressed="true"], .setting-button[aria-pressed="true"] { color: var(--violet-dark); background: var(--lilac); border-color: #d9cdef; }
+    .mode-button:hover, .setting-button:hover { border-color: #c6badd; }
     #pauseButton { background: #faf9fc; padding-inline: 15px; min-width: 102px; }
     #pauseButton[aria-pressed="true"] { color: var(--violet-dark); border-color: #baa9d8; background: var(--lilac); }
     .play-area { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 35px; padding: 25px 32px; align-items: stretch; }
@@ -184,7 +184,7 @@
       .shell { padding: max(16px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left)); }
       .toolbar { padding: 14px 18px; gap: 10px; }
       .game-settings { gap: 12px; }
-      .difficulty, .mode-setting { gap: 9px; }
+      .difficulty, .mode-setting, .number-setting, .operation-setting { gap: 9px; }
       .level { padding: 7px 10px; gap: 5px; }
       .play-area { grid-template-columns: minmax(0, 1fr) 280px; gap: 23px; padding: 23px; }
       .equation { font-size: 56px; gap: 10px; }
@@ -204,11 +204,12 @@
       .score-label { font-size: 11px; }
       .toolbar { padding: 13px; align-items: stretch; }
       .game-settings { width: 100%; gap: 9px; }
-      .difficulty, .mode-setting { flex: 1 1 100%; }
+      .difficulty, .mode-setting, .number-setting, .operation-setting { flex: 1 1 100%; }
       .difficulty-options { flex: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
-      .mode-options { flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+      .mode-options, .setting-options { flex: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+      .operation-setting .setting-options, .mode-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .level { flex-direction: column; justify-content: center; gap: 2px; padding: 7px 4px; }
-      .mode-button { padding: 8px 5px; }
+      .mode-button, .setting-button { padding: 8px 5px; }
       .level span { font-size: 10px; }
       .section-label { display: none; }
       #pauseButton { width: 100%; }
@@ -240,11 +241,11 @@
     <header class="header">
       <div class="brand">
         <span class="brand-icon" aria-hidden="true">+</span>
-        <div><h1>עוד ועוד</h1><p class="subtitle">חיבור קטן, הצלחה גדולה.</p></div>
+        <div><h1>עוד ועוד</h1><p class="subtitle">חשבון קטן, הצלחה גדולה.</p></div>
       </div>
       <nav class="header-actions" aria-label="אפשרויות המשחק">
         <button class="quiet" id="helpButton" type="button">איך משחקים?</button>
-        <button class="quiet" id="resetButton" type="button" disabled>מתחילים מחדש</button>
+        <button class="quiet" id="resetButton" type="button" disabled>התחלה מחדש</button>
       </nav>
     </header>
 
@@ -254,7 +255,7 @@
       <div class="score total"><span class="score-icon" aria-hidden="true">=</span><span class="score-label">סך הכול</span><strong class="score-value" id="totalCount">0</strong></div>
     </section>
 
-    <section class="game-card" id="gameCard" aria-label="משחק החיבור">
+    <section class="game-card" id="gameCard" aria-label="משחק חשבון">
       <div class="toolbar">
         <div class="game-settings">
           <div class="difficulty">
@@ -274,6 +275,29 @@
               <button class="mode-button" data-mode="choices" type="button" aria-pressed="false">בוחרים מתוך 4</button>
             </div>
           </div>
+          <div class="number-setting">
+            <span class="section-label" id="firstDigitsLabel">ספרות במספר הראשון</span>
+            <div class="setting-options" role="group" aria-labelledby="firstDigitsLabel">
+              <button class="setting-button" data-first-digits="1" type="button" aria-pressed="true">ספרה 1</button>
+              <button class="setting-button" data-first-digits="2" type="button" aria-pressed="false">2 ספרות</button>
+              <button class="setting-button" data-first-digits="3" type="button" aria-pressed="false">3 ספרות</button>
+            </div>
+          </div>
+          <div class="number-setting">
+            <span class="section-label" id="secondDigitsLabel">ספרות במספר השני</span>
+            <div class="setting-options" role="group" aria-labelledby="secondDigitsLabel">
+              <button class="setting-button" data-second-digits="1" type="button" aria-pressed="true">ספרה 1</button>
+              <button class="setting-button" data-second-digits="2" type="button" aria-pressed="false">2 ספרות</button>
+              <button class="setting-button" data-second-digits="3" type="button" aria-pressed="false">3 ספרות</button>
+            </div>
+          </div>
+          <div class="operation-setting">
+            <span class="section-label" id="operationLabel">פעולה</span>
+            <div class="setting-options" role="group" aria-labelledby="operationLabel">
+              <button class="setting-button" data-operation="addition" type="button" aria-pressed="true">חיבור +</button>
+              <button class="setting-button" data-operation="subtraction" type="button" aria-pressed="false">חיסור −</button>
+            </div>
+          </div>
         </div>
         <button class="quiet" id="pauseButton" type="button" aria-pressed="false" disabled>השהיה Ⅱ</button>
       </div>
@@ -285,9 +309,9 @@
             <div class="timer-track" id="timerTrack" role="progressbar" aria-label="הזמן שנותר לתרגיל" aria-valuemin="0" aria-valuemax="12" aria-valuenow="12"><div id="timerFill"></div></div>
           </div>
           <div class="question-content">
-            <span class="question-tag"><span class="tag-dot" aria-hidden="true"></span><span id="questionTag">רק חיבור. רק 0 עד 9.</span></span>
-            <div class="equation" id="equation" dir="ltr" role="math" aria-label="תרגיל החיבור יופיע עם תחילת המשחק">
-              <span id="operandA" aria-hidden="true">?</span><span class="operator" aria-hidden="true">+</span><span id="operandB" aria-hidden="true">?</span><span class="operator" aria-hidden="true">=</span><span class="unknown" aria-hidden="true">?</span>
+            <span class="question-tag"><span class="tag-dot" aria-hidden="true"></span><span id="questionTag">בחרו מספר ספרות ופעולה.</span></span>
+            <div class="equation" id="equation" dir="ltr" role="math" aria-label="תרגיל חשבון יופיע עם תחילת המשחק">
+              <span id="operandA" aria-hidden="true">?</span><span class="operator" id="operatorSymbol" aria-hidden="true">+</span><span id="operandB" aria-hidden="true">?</span><span class="operator" aria-hidden="true">=</span><span class="unknown" aria-hidden="true">?</span>
             </div>
             <p class="question-hint" id="questionHint">בחרו קצב ולחצו על ״מתחילים!״.<br>כל תרגיל הוא הזדמנות להצליח.</p>
           </div>
@@ -318,27 +342,28 @@
         <span class="feedback-copy" id="feedbackText">בלי סוף, בלי לחץ. בוחרים קצב ומתאמנים.</span>
       </div>
     </section>
-    <footer class="footer"><span>חיבור של מספרים מ־0 עד 9 · המשחק ממשיך כל עוד רוצים</span><span>אפשר לטעות. ככה לומדים.</span></footer>
+    <footer class="footer"><span>חיבור וחיסור עד 3 ספרות · המשחק ממשיך כל עוד רוצים</span><span>אפשר לטעות. ככה לומדים.</span></footer>
     <p class="sr-only" id="announcement" aria-live="polite" aria-atomic="true"></p>
   </main>
 
   <dialog id="helpDialog" aria-labelledby="helpTitle">
-    <div class="dialog-heading"><h2 id="helpTitle">נעים להכיר, חיבור.</h2><button class="quiet close" type="button" data-close="help" aria-label="סגירת ההוראות">×</button></div>
-    <p>משחק קטן לתרגול חיבור. בכל תרגיל מופיעים <strong>שני מספרים בין 0 ל־9</strong>. התשובה יכולה להיות בין 0 ל־18.</p>
+    <div class="dialog-heading"><h2 id="helpTitle">נעים להכיר, חשבון.</h2><button class="quiet close" type="button" data-close="help" aria-label="סגירת ההוראות">×</button></div>
+    <p>משחק קטן לתרגול חיבור וחיסור. אפשר לבחור <strong>1, 2 או 3 ספרות</strong> בנפרד לכל אחד משני המספרים.</p>
     <ol>
       <li>בחרו זמן לכל תרגיל: <strong>12, 8, 5 או 4 שניות</strong>, או בטלו לגמרי את הגבלת הזמן.</li>
       <li>בחרו אם להקליד את התשובה או לבחור אותה מתוך <strong>4 תשובות שונות</strong>.</li>
+      <li>בחרו את מספר הספרות בכל מספר ואם לתרגל <strong>חיבור או חיסור</strong>. בחיסור המספר הראשון תמיד יהיה גדול מהמספר השני או שווה לו, כך שהתוצאה לא תהיה שלילית.</li>
       <li>במצב הקלדה, הקישו על הספרות ואז על <strong>בדיקת התשובה</strong>. במצב בחירה, פשוט הקישו על התשובה הנכונה.</li>
       <li>תשובה נכונה מוסיפה להצלחות. במצב עם שעון, תשובה שגויה או תום הזמן מוסיפים לטעות אחת בלבד. ללא הגבלת זמן ממשיכים לנסות את אותו התרגיל עד שעונים נכון.</li>
       <li>אחרי משוב קצר מופיע תרגיל חדש, ללא הגבלת סבבים. סך הכול הוא מספר התרגילים שכבר הסתיימו.</li>
     </ol>
-    <p>שינוי הקצב או אופן המענה בזמן המשחק חל מהתרגיל הבא ואינו מאפס את התוצאות. כפתור ההשהיה, פתיחת חלון עזרה ומעבר ללשונית אחרת עוצרים את השעון.</p>
+    <p>שינוי הקצב, אופן המענה, מספר הספרות או הפעולה בזמן המשחק חל מהתרגיל הבא ואינו מאפס את התוצאות. כפתור ההשהיה, פתיחת חלון עזרה ומעבר ללשונית אחרת עוצרים את השעון.</p>
     <p>אין צורך במקלדת. במצב הקלדה אפשר גם להקליד ספרות ולאשר במקש האישור.</p>
     <button class="primary" style="width:100%" type="button" data-close="help">הבנתי, ממשיכים</button>
   </dialog>
   <dialog id="resetDialog" aria-labelledby="resetTitle">
-    <div class="dialog-heading"><h2 id="resetTitle">מתחילים דף חדש?</h2></div>
-    <p>התוצאות והתרגיל הנוכחי יתאפסו. הקצב ואופן המענה שבחרתם יישמרו. המשחק מושהה עד שתחליטו.</p>
+    <div class="dialog-heading"><h2 id="resetTitle">להתחיל משחק חדש?</h2></div>
+    <p>התוצאות והתרגיל הנוכחי יתאפסו, ומשחק חדש יתחיל מיד עם הקצב, מספר הספרות, הפעולה ואופן המענה שבחרתם.</p>
     <div class="dialog-actions"><button class="quiet" type="button" data-close="reset" autofocus>חוזרים למשחק</button><button class="primary" id="confirmReset" type="button">כן, מתחילים מחדש</button></div>
   </dialog>
   <noscript><p style="padding:24px;text-align:center">כדי לשחק, יש לאפשר הרצת סקריפטים בדפדפן.</p></noscript>
@@ -350,18 +375,34 @@
     const FEEDBACK_MS = 1400;
     const $ = id => document.getElementById(id);
 
-    class AdditionMath {
+    class ArithmeticMath {
       constructor(random = Math.random) { this.random = random; }
-      next() {
-        const a = Math.floor(this.random() * 10);
-        const b = Math.floor(this.random() * 10);
-        return Object.freeze({ a, b, answer: a + b });
+      range(digits) {
+        return digits === 1 ? [0, 9] : [10 ** (digits - 1), 10 ** digits - 1];
+      }
+      integer(min, max) {
+        return min + Math.floor(this.random() * (max - min + 1));
+      }
+      next(firstDigits, secondDigits, operation) {
+        const [minA, maxA] = this.range(firstDigits);
+        const [minB, maxB] = this.range(secondDigits);
+        if (operation === "subtraction") {
+          if (maxA < minB) throw new RangeError("בחיסור למספר הראשון חייבות להיות לפחות כמספר הספרות של המספר השני.");
+          const b = this.integer(minB, Math.min(maxB, maxA));
+          const a = this.integer(Math.max(minA, b), maxA);
+          return Object.freeze({ a, b, operation, answer: a - b });
+        }
+        const a = this.integer(minA, maxA);
+        const b = this.integer(minB, maxB);
+        return Object.freeze({ a, b, operation, answer: a + b });
       }
       choices(problem) {
-        const alternatives = Array.from({ length: 19 }, (_, value) => value)
-          .filter(value => value !== problem.answer);
-        this.shuffle(alternatives);
-        return Object.freeze(this.shuffle([problem.answer, ...alternatives.slice(0, 3)]));
+        const values = new Set([problem.answer]);
+        for (let offset = 1; values.size < 4; offset++) {
+          values.add(problem.answer + offset);
+          if (problem.answer >= offset) values.add(problem.answer - offset);
+        }
+        return Object.freeze(this.shuffle([...values].slice(0, 4)));
       }
       shuffle(values) {
         for (let index = values.length - 1; index > 0; index--) {
@@ -371,15 +412,18 @@
         return values;
       }
       isCorrect(problem, text) {
-        return /^\d{1,2}$/.test(text) && Number(text) === problem.answer;
+        return /^\d+$/.test(text) && Number(text) === problem.answer;
       }
     }
 
-    class AdditionGame {
+    class ArithmeticGame {
       constructor() {
-        this.math = new AdditionMath();
+        this.math = new ArithmeticMath();
         this.selectedSeconds = 12;
         this.selectedMode = "typing";
+        this.selectedFirstDigits = 1;
+        this.selectedSecondDigits = 1;
+        this.selectedOperation = "addition";
         this.pauseReasons = new Set();
         this.lastTick = performance.now();
         this.bindEvents();
@@ -396,6 +440,9 @@
         this.correct = 0; this.wrong = 0;
         this.problem = null;
         this.currentMode = this.selectedMode;
+        this.currentFirstDigits = this.selectedFirstDigits;
+        this.currentSecondDigits = this.selectedSecondDigits;
+        this.currentOperation = this.selectedOperation;
         this.answerChoices = [];
         this.currentSeconds = this.selectedSeconds;
         this.remainingMs = this.currentSeconds === null ? 0 : this.currentSeconds * 1000;
@@ -406,7 +453,8 @@
         this.lastTick = performance.now();
         $("answer").value = "";
         $("operandA").textContent = "?"; $("operandB").textContent = "?";
-        $("equation").setAttribute("aria-label", "תרגיל החיבור יופיע עם תחילת המשחק");
+        $("operatorSymbol").textContent = this.operationSymbol(this.currentOperation);
+        $("equation").setAttribute("aria-label", "תרגיל חשבון יופיע עם תחילת המשחק");
         $("announcement").textContent = "";
         this.setFeedback("בלי סוף, בלי לחץ. בוחרים קצב ומתאמנים.");
         this.render();
@@ -418,6 +466,15 @@
         $("unlimitedButton").addEventListener("click", () => this.changeLevel(null));
         document.querySelectorAll("[data-mode]").forEach(button => {
           button.addEventListener("click", () => this.changeMode(button.dataset.mode));
+        });
+        document.querySelectorAll("[data-first-digits]").forEach(button => {
+          button.addEventListener("click", () => this.changeDigits("first", Number(button.dataset.firstDigits)));
+        });
+        document.querySelectorAll("[data-second-digits]").forEach(button => {
+          button.addEventListener("click", () => this.changeDigits("second", Number(button.dataset.secondDigits)));
+        });
+        document.querySelectorAll("[data-operation]").forEach(button => {
+          button.addEventListener("click", () => this.changeOperation(button.dataset.operation));
         });
         document.querySelectorAll("[data-key]").forEach(button => {
           button.addEventListener("click", () => this.editAnswer(button.dataset.key));
@@ -446,8 +503,12 @@
             event.preventDefault(); this.closeDialog(name);
           });
         }
-        $("confirmReset").addEventListener("click", () => this.reset());
+        $("confirmReset").addEventListener("click", () => this.restart());
         document.addEventListener("visibilitychange", () => this.setPause("hidden", document.hidden));
+      }
+      restart() {
+        this.reset();
+        this.nextQuestion();
       }
       start() {
         this.sync();
@@ -455,7 +516,10 @@
         this.nextQuestion();
       }
       nextQuestion() {
-        this.problem = this.math.next();
+        this.currentFirstDigits = this.selectedFirstDigits;
+        this.currentSecondDigits = this.selectedSecondDigits;
+        this.currentOperation = this.selectedOperation;
+        this.problem = this.math.next(this.currentFirstDigits, this.currentSecondDigits, this.currentOperation);
         this.phase = "question";
         this.currentMode = this.selectedMode;
         this.answerChoices = this.currentMode === "choices" ? this.math.choices(this.problem) : [];
@@ -467,8 +531,11 @@
         $("answer").removeAttribute("aria-invalid");
         $("operandA").textContent = this.problem.a;
         $("operandB").textContent = this.problem.b;
-        $("equation").setAttribute("aria-label", `כמה הם ${this.problem.a} ועוד ${this.problem.b}?`);
-        $("announcement").textContent = `תרגיל ${this.total + 1}: ${this.problem.a} ועוד ${this.problem.b}.${this.currentSeconds === null ? " אין הגבלת זמן." : ` לרשותכם ${this.currentSeconds} שניות.`}`;
+        $("operatorSymbol").textContent = this.operationSymbol(this.currentOperation);
+        $("answer").maxLength = this.answerDigits();
+        const operationWord = this.currentOperation === "addition" ? "ועוד" : "פחות";
+        $("equation").setAttribute("aria-label", `כמה הם ${this.problem.a} ${operationWord} ${this.problem.b}?`);
+        $("announcement").textContent = `תרגיל ${this.total + 1}: ${this.problem.a} ${operationWord} ${this.problem.b}.${this.currentSeconds === null ? " אין הגבלת זמן." : ` לרשותכם ${this.currentSeconds} שניות.`}`;
         this.setFeedback(this.currentMode === "choices"
           ? this.currentSeconds === null ? "אחת מארבע התשובות נכונה. בחרו בה כשתהיו מוכנים!" : "אחת מארבע התשובות נכונה. בחרו בה לפני שהזמן נגמר!"
           : "הקישו על הספרות ואז על בדיקת התשובה. אתם יכולים!");
@@ -516,6 +583,48 @@
         if (this.phase === "ready") this.currentMode = mode;
         this.render();
       }
+      changeDigits(operand, digits) {
+        if (!["first", "second"].includes(operand) || ![1, 2, 3].includes(digits)) throw new RangeError("מספר ספרות לא מוכר.");
+        this.sync();
+        if (operand === "first") {
+          this.selectedFirstDigits = digits;
+          if (this.selectedOperation === "subtraction" && this.selectedSecondDigits > digits) this.selectedSecondDigits = digits;
+        } else {
+          this.selectedSecondDigits = digits;
+          if (this.selectedOperation === "subtraction" && this.selectedFirstDigits < digits) this.selectedFirstDigits = digits;
+        }
+        if (this.phase === "ready") {
+          this.currentFirstDigits = this.selectedFirstDigits;
+          this.currentSecondDigits = this.selectedSecondDigits;
+        }
+        this.render();
+      }
+      changeOperation(operation) {
+        if (!["addition", "subtraction"].includes(operation)) throw new RangeError("פעולה לא מוכרת.");
+        this.sync();
+        this.selectedOperation = operation;
+        if (operation === "subtraction" && this.selectedFirstDigits < this.selectedSecondDigits) {
+          this.selectedFirstDigits = this.selectedSecondDigits;
+        }
+        if (this.phase === "ready") {
+          this.currentOperation = operation;
+          this.currentFirstDigits = this.selectedFirstDigits;
+          $("operatorSymbol").textContent = this.operationSymbol(operation);
+        }
+        this.render();
+      }
+      operationSymbol(operation) {
+        return operation === "addition" ? "+" : "−";
+      }
+      answerDigits(useSelected = false) {
+        const firstDigits = useSelected ? this.selectedFirstDigits : this.currentFirstDigits;
+        const secondDigits = useSelected ? this.selectedSecondDigits : this.currentSecondDigits;
+        const operation = useSelected ? this.selectedOperation : this.currentOperation;
+        const maximum = operation === "addition"
+          ? (10 ** firstDigits - 1) + (10 ** secondDigits - 1)
+          : 10 ** firstDigits - 1;
+        return String(maximum).length;
+      }
       setPause(reason, paused) {
         this.sync();
         if (paused) this.pauseReasons.add(reason); else this.pauseReasons.delete(reason);
@@ -545,8 +654,8 @@
           value = value.slice(0, from) + value.slice(end); cursor = from;
         } else if (/^\d$/.test(key)) {
           value = value.slice(0, start) + key + value.slice(end);
-          if (value.length > 2) {
-            this.setFeedback("לתשובה מספיקות שתי ספרות. אפשר למחוק או לנקות ולנסות שוב.");
+          if (value.length > this.answerDigits()) {
+            this.setFeedback(`לתשובה מספיקות ${this.answerDigits()} ספרות. אפשר למחוק או לנקות ולנסות שוב.`);
             return;
           }
           cursor = start + 1;
@@ -561,7 +670,7 @@
         this.sync();
         if (!this.active || this.currentMode !== "typing") return;
         const input = $("answer");
-        if (!/^\d{1,2}$/.test(input.value)) {
+        if (!new RegExp(`^\\d{1,${this.answerDigits()}}$`).test(input.value)) {
           input.setAttribute("aria-invalid", "true");
           this.setFeedback("קודם מזינים תשובה בעזרת הספרות, ואז בודקים.");
           input.focus({ preventScroll: true });
@@ -653,6 +762,16 @@
         document.querySelectorAll("[data-mode]").forEach(button => {
           button.setAttribute("aria-pressed", String(button.dataset.mode === this.selectedMode));
         });
+        document.querySelectorAll("[data-first-digits]").forEach(button => {
+          button.setAttribute("aria-pressed", String(Number(button.dataset.firstDigits) === this.selectedFirstDigits));
+        });
+        document.querySelectorAll("[data-second-digits]").forEach(button => {
+          button.setAttribute("aria-pressed", String(Number(button.dataset.secondDigits) === this.selectedSecondDigits));
+        });
+        document.querySelectorAll("[data-operation]").forEach(button => {
+          button.setAttribute("aria-pressed", String(button.dataset.operation === this.selectedOperation));
+        });
+        $("answer").maxLength = this.phase === "ready" ? this.answerDigits(true) : this.answerDigits();
         const shownMode = this.phase === "ready" ? this.selectedMode : this.currentMode;
         $("typingAnswer").hidden = shownMode !== "typing";
         $("choiceAnswer").hidden = shownMode !== "choices" || this.phase === "ready";
@@ -669,17 +788,22 @@
           : this.paused ? "השעון עצור"
           : this.phase === "feedback" ? "רגע קטן לפני שממשיכים"
           : this.currentSeconds === null ? "מתקדמים בקצב שלכם" : `${this.currentSeconds} שניות לכל תרגיל`;
-        $("questionTag").textContent = this.phase === "ready" ? "רק חיבור. רק 0 עד 9." : this.paused ? "אפשר לנשום. אנחנו מחכים." : `תרגיל ${this.phase === "feedback" ? this.total : this.total + 1}`;
-        $("questionHint").textContent = this.phase === "ready" ? "בחרו קצב ואופן מענה, ואז לחצו על ״מתחילים!״." : this.paused ? "ממשיכים בדיוק מאותה נקודה כשחוזרים למשחק." : this.phase === "feedback" ? `התשובה היא ${this.result.answer}. התרגיל הבא כבר בדרך.` : shownMode === "choices" ? "מה הסכום? בחרו תשובה אחת מתוך ארבע." : this.currentSeconds === null ? "מה הסכום? הזינו תשובה ובדקו כשתהיו מוכנים." : "מה הסכום? הזינו תשובה ובדקו לפני שהזמן נגמר.";
+        const readyOperation = this.selectedOperation === "addition" ? "חיבור" : "חיסור";
+        const questionName = this.currentOperation === "addition" ? "הסכום" : "ההפרש";
+        $("questionTag").textContent = this.phase === "ready" ? `${readyOperation}: ${this.selectedFirstDigits} ו־${this.selectedSecondDigits} ספרות.` : this.paused ? "אפשר לנשום. אנחנו מחכים." : `תרגיל ${this.phase === "feedback" ? this.total : this.total + 1}`;
+        $("questionHint").textContent = this.phase === "ready" ? "בחרו קצב, מספר ספרות, פעולה ואופן מענה, ואז לחצו על ״מתחילים!״." : this.paused ? "ממשיכים בדיוק מאותה נקודה כשחוזרים למשחק." : this.phase === "feedback" ? `התשובה היא ${this.result.answer}. התרגיל הבא כבר בדרך.` : shownMode === "choices" ? `מה ${questionName}? בחרו תשובה אחת מתוך ארבע.` : this.currentSeconds === null ? `מה ${questionName}? הזינו תשובה ובדקו כשתהיו מוכנים.` : `מה ${questionName}? הזינו תשובה ובדקו לפני שהזמן נגמר.`;
         const pending = [];
         if (this.phase !== "ready" && this.selectedSeconds !== this.currentSeconds) pending.push(this.selectedSeconds === null ? "ללא הגבלת זמן" : `${this.selectedSeconds} שניות`);
         if (this.phase !== "ready" && this.selectedMode !== this.currentMode) pending.push(this.selectedMode === "choices" ? "בחירה מתוך 4" : "הקלדת תשובה");
+        if (this.phase !== "ready" && this.selectedFirstDigits !== this.currentFirstDigits) pending.push(`${this.selectedFirstDigits} ספרות במספר הראשון`);
+        if (this.phase !== "ready" && this.selectedSecondDigits !== this.currentSecondDigits) pending.push(`${this.selectedSecondDigits} ספרות במספר השני`);
+        if (this.phase !== "ready" && this.selectedOperation !== this.currentOperation) pending.push(this.selectedOperation === "addition" ? "חיבור" : "חיסור");
         $("pendingLevel").textContent = pending.length ? `מהתרגיל הבא: ${pending.join(" · ")}. התוצאות נשמרות.` : "";
         this.renderClock();
       }
     }
 
-    const game = new AdditionGame();
+    const game = new ArithmeticGame();
   </script>
 </body>
 </html>
